@@ -1,23 +1,21 @@
-import logo from './logo.svg';
 import './App.css';
+import Configuration from './Component/Configuration';
+import Header from './Component/Header';
+import WorkOrder from './Component/WorkOrder';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import WorkOrderList from './Component/WorkOrderList';
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Router>
+        {/* <Header /> */}
+        <Routes>
+          <Route path='/' element={<Configuration />} />
+          <Route path='/workorder' element={<WorkOrder />} />
+          <Route path='/workorderlist' element={<WorkOrderList/>}/>
+        </Routes>
+      </Router>
     </div>
   );
 }

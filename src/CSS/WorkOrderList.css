@@ -1,0 +1,36 @@
+/* WorkOrderList.css */
+
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.custom-table th,
+.custom-table td {
+  padding: 12px;
+  text-align: left;
+}
+
+.custom-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+.custom-table tbody tr:nth-child(odd) {
+  background-color: #f3f4f6;
+}
+
+.custom-table tbody tr:hover {
+  background-color: #e0e6f5;
+}
+
+.custom-table .btn {
+  padding: 6px 12px;
+}
+
+.bg-secondary-light {
+  background-color: rgba(182, 199, 210, 0.8); 
+}
