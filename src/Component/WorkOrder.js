@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';     
+
 
 const WorkOrder = () => {
     const [formData, setFormData] = useState({
@@ -10,12 +12,14 @@ const WorkOrder = () => {
         capacity: '',
         hazmat: false,
         itemType: '',
-        route:''
+        route:'',
+
     });
     const [originOptions, setOriginOptions] = useState([]);
     const [destinationOptions, setDestinationOptions] = useState([]);
     const [disableDestination,setDisableDestination]= useState(true);
     const [workflowOptions, setWorkflowOptions] = useState([]);
+    const navigate = useNavigate();
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -89,7 +93,7 @@ const WorkOrder = () => {
                 capacity: '',
                 hazmat: false,
                 itemType: '',
-                route:''
+                route:'',
             });
             setDisableDestination(true);
             console.log("formSubmitted" + response);
@@ -97,9 +101,21 @@ const WorkOrder = () => {
             const workOrderId = await response.data.workOrderId;
             console.log(workOrderId);
 
-            await axios.get('http://localhost:8080/savedlist/' + workOrderId);
-
+            const carrierSelectionList = await axios.get('http://localhost:8080/savedlist/' + workOrderId);
             
+
+
+            // if (formData.configuration?.configuration === "MANUAL") {
+            //     await axios.get('http://localhost:8080/list/' + workOrderId);
+            //     console.log("first");
+            //     // Navigate to '/popup' when configuration is "MANUAL"
+            //     navigate('/workorderlist');
+            //   } else {
+            //     await axios.get('http://localhost:8080/savedlist/' + workOrderId);
+            //     // Navigate to '/workorder' when configuration is not "MANUAL"
+            //     // navigate('/workorder');
+            //   }
+
             // Add any additional logic upon successful data submission
         } 
         catch (error) {
@@ -151,7 +167,7 @@ const WorkOrder = () => {
    
     return (
         <div className="container mt-5">
-            <h2>Work Order Form</h2>
+            <h2>Work Order</h2>
             <form onSubmit={(e) => handleSubmit(formData.origin, formData.destination, e)}>
                 <div className="mb-3">
                     <label className="form-label">Origin:</label>
@@ -251,7 +267,7 @@ const WorkOrder = () => {
                             />
                             <label className="form-check-label">Hazmat</label>
                         </div>
-                        <div className="form-check form-check-inline">
+                        {/* <div className="form-check form-check-inline">
                             <input
                                 className="form-check-input"
                                 type="radio"
@@ -261,7 +277,7 @@ const WorkOrder = () => {
                                 onChange={handleInputChange}
                             />
                             <label className="form-check-label">Perishable</label>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
                 <button type="submit" className="btn btn-primary">
