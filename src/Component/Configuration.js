@@ -7,7 +7,7 @@ import "../CSS/Configuration.css";
 const Configuration = () => {
   const [formData, setFormData] = useState({
     workFlowName: "",
-    loadType: "",
+    // loadType: "",
     cost: "",
     configuration: "",
     createWorkOrder: "",
@@ -16,8 +16,8 @@ const Configuration = () => {
   const [configuration, setConfigurations] = useState([]);
   const [animateFields, setAnimateFields] = useState({
     stepOne: true,
-    stepTwo: false,
-    stepThree: false,
+    // stepTwo: false,
+    // stepThree: false,
     stepFour: false,
     stepFive: false,
   });
@@ -35,10 +35,10 @@ const Configuration = () => {
         return "Select Carrier Automatically By Least Cost";
       case "MANUAL":
         return "Select Carrier Manually";
-      // case 'CONFIG_3':
-      //     return 'Configuration 3 Label'; // Change this to your desired label
-      // case 'CONFIG_4':
-      //     return 'Configuration 4 Label'; // Change this to your desired label
+      case 'FASTDELIVERY':
+          return "Select Carrier By Min Delivery Time"; // Change this to your desired label
+    //   case 'LCL':
+    //       return "Select Carrier Of LCL LoadType"; // Change this to your desired label
       // default:
       //     return 'Unknown Configuration';
     }
@@ -49,8 +49,8 @@ const Configuration = () => {
     e.preventDefault();
 
     if (
-      !formData.loadType ||
-      !formData.cost ||
+    //   !formData.loadType ||
+    //   !formData.cost ||
       !formData.configuration ||
       !formData.workFlowName ||
       !formData.createWorkOrder
@@ -100,19 +100,20 @@ const Configuration = () => {
     } else if (name === "createWorkOrder") {
       setAnimateFields((prevState) => ({
         ...prevState,
-        stepThree: true,
-      }));
-    } else if (name === "loadType") {
-      setAnimateFields((prevState) => ({
-        ...prevState,
-        stepFour: true,
-      }));
-    } else if (name === "cost") {
-      setAnimateFields((prevState) => ({
-        ...prevState,
         stepFive: true,
       }));
-    }
+    } 
+    // else if (name === "loadType") {
+    //   setAnimateFields((prevState) => ({
+    //     ...prevState,
+    //     stepFour: true,
+    //   }));
+    // } else if (name === "cost") {
+    //   setAnimateFields((prevState) => ({
+    //     ...prevState,
+    //     stepFive: true,
+    //   }));
+    // }
   };
   
 
@@ -169,7 +170,7 @@ const Configuration = () => {
           </div>
         )}
 
-        {animateFields.stepThree && (
+        {/* {animateFields.stepThree && (
           <div>
             <h2>Step 3: Load Type </h2>
             <div
@@ -229,11 +230,11 @@ const Configuration = () => {
               />
             </div>
           </div>
-        )}
+        )} */}
 
         {animateFields.stepFive && (
           <div>
-            <h2>Step 5: Select Configuration</h2>
+            <h2>Step 3: Select Configuration</h2>
             <div
               className={`mb-3 animated-form-field ${
                 animateFields.stepFive ? "animated" : ""

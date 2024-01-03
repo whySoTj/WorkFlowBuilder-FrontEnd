@@ -96,8 +96,8 @@ const WorkOrderList = () => {
     <div className="container mt-4">
       <h2 className="mb-4">Work Orders List</h2>
       <Table className="custom-table" striped>
-        <thead>
-          <tr>
+        <thead className="table-header">
+          <tr className="table-dark">
             <th className="custom-table-header">Work Order ID</th>
             <th className="custom-table-header">Origin</th>
             <th className="custom-table-header">Destination</th>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import toast from "react-hot-toast";
+import toast, {Toaster}from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import {
   Modal,
@@ -27,6 +27,9 @@ const WorkOrder = () => {
   const [workflowOptions, setWorkflowOptions] = useState([]);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [selectedCarrierId, setSelectedCarrierId] = useState(null);
+  const [workOrderId, setWorkOrderId] = useState(null);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -64,6 +67,27 @@ const WorkOrder = () => {
       console.error("Error sending data:", error);
     }
   };
+  const handleCarrierSelect = async (carrierId) => {
+    setSelectedCarrierId(carrierId);
+    setConfirmModal(true);
+  };
+
+  // Manual selection of carriers
+  const handleConfirm = async () => {
+    try {
+      // Assuming you have access to workOrderId and selectedCarrierId here
+      const response = await axios.get(
+        "http://localhost:8080/selectcarrier/" + workOrderId +"/"+selectedCarrierId);
+        console.log(response.data)
+      // Perform any actions needed after successful selection
+      // ...
+      toast.success("Carrier has been selected");
+    } catch (error) {
+      console.error("Error selecting carrier:", error);
+    }
+    setConfirmModal(false);
+    setShowDetailsModal(false);
+  };
 
   const handleSubmit = async (originId, destinationId, e) => {
     e.preventDefault();
@@ -81,11 +105,37 @@ const WorkOrder = () => {
         "http://localhost:8080/workorder",
         payload
       );
-      toast.success("Work Order has been successfully created");
-      console.log(response.data);
       const workFlowId = response.data.workFlow.workFlowId;
       console.log(workFlowId);
       const workOrderId = response.data.workOrderId;
+      setWorkOrderId(workOrderId);
+      try {
+        const workflowResponse = await axios.get(
+          "http://localhost:8080/workflow"
+        );
+        console.log(workflowResponse);
+        const workFlowResponseId =
+          workflowResponse.data[workFlowId - 1].workFlowId;
+        console.log(workFlowResponseId);
+        const workFlowResponseName =
+          workflowResponse.data[workFlowId - 1].configuration.configuration;
+        console.log(workFlowResponseName);
+        if (
+          workFlowId == workFlowResponseId &&
+          (workFlowResponseName == "AUTOMATIC"||workFlowResponseName=="FASTDELIVERY")
+        ) {
+          toast.success("Work Order has been successfully created");
+          console.log(response.data);
+          // setSelectedWorkOrder(modalDataResponse.data);
+          // setShowDetailsModal(true);
+        }
+      } catch (error) {
+        console.error("Error fetching workflow data:", error);
+      }
+      // const workFlowId = response.data.workFlow.workFlowId;
+      // console.log(workFlowId);
+      // const workOrderId = response.data.workOrderId;
+      // setWorkOrderId(workOrderId);
 
       const modalDataResponse = await axios.get(
         "http://localhost:8080/savedlist/" + workOrderId
@@ -125,6 +175,7 @@ const WorkOrder = () => {
     } catch (error) {
       console.error("Error creating work order:", error);
     }
+    
   };
 
   useEffect(() => {
@@ -281,6 +332,22 @@ const WorkOrder = () => {
         </button>
       </form>
 
+      {/* Modal for carrier selection confirmation */}
+      <Modal isOpen={confirmModal} toggle={() => setConfirmModal(false)}>
+        <ModalHeader>Select Carrier Confirmation</ModalHeader>
+        <ModalBody>
+          Are you sure you want to select this Carrier for the Work Order?
+        </ModalBody>
+        <ModalFooter>
+          <Button color="danger" onClick={handleConfirm}>
+            Confirm
+          </Button>
+          <Button color="secondary" onClick={() => setConfirmModal(false)}>
+            Cancel
+          </Button>
+        </ModalFooter>
+      </Modal>
+
       {/* Modal */}
       <Modal
         isOpen={showDetailsModal}
@@ -312,8 +379,14 @@ const WorkOrder = () => {
                     <td>{order.cost}</td>
                     <td>{order.carrier.carrierName}</td>
                     <td>
-                      {/* Add a "Select" button for each row */}
-                      <Button color="primary">Select</Button>
+                      <Button
+                        color="primary"
+                        onClick={() =>
+                          handleCarrierSelect(order.carrier.carrierId)
+                        }
+                      >
+                        Select
+                      </Button>
                     </td>
                     {/* <td>{order.itemType}</td> */}
                     {/* <td>{order.loadType}</td> */}
@@ -330,6 +403,7 @@ const WorkOrder = () => {
           </Button>
         </ModalFooter>
       </Modal>
+      <Toaster />
     </div>
   );
 };

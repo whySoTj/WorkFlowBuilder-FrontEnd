@@ -1,0 +1,25 @@
+/* CustomNavbar.css */
+.custom-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: white;
+    padding: 5px 10px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+  
+  .custom-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .truck-icon {
+    margin-right: 5px;
+  }
+  
+  .button-text {
+    margin-left: 3px;
+  }
+  
