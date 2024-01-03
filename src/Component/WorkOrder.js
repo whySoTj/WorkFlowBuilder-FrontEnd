@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, {Toaster}from "react-hot-toast";
+
 import {
   Modal,
   ModalHeader,
@@ -9,10 +10,11 @@ import {
   Table,
   Button,
 } from "reactstrap";
+import { useLocation } from "react-router-dom";
 
 const WorkOrder = () => {
   const [formData, setFormData] = useState({
-    workFlow:{workFlowId: "4"},
+    workFlow:{workFlowId: " "},
     origin: "",
     destination: "",
     capacity: "",
@@ -29,6 +31,7 @@ const WorkOrder = () => {
   const [confirmModal, setConfirmModal] = useState(false);
   const [selectedCarrierId, setSelectedCarrierId] = useState(null);
   const [workOrderId, setWorkOrderId] = useState(null);
+const location=useLocation();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -143,18 +146,26 @@ const WorkOrder = () => {
         const workflowResponse = await axios.get(
           "http://localhost:8080/workflow"
         );
+
         const workFlowResponseId =
           workflowResponse.data[workFlowId - 1].workFlowId;
         console.log(workFlowResponseId);
+
         const workFlowResponseName =
           workflowResponse.data[workFlowId - 1].configuration.configuration;
         console.log(workFlowResponseName);
+
         if (
           workFlowId === workFlowResponseId &&
-          workFlowResponseName === "MANUAL"
+          workFlowResponseName === "MANUAL" &&
+          modalDataResponse.data.length!==0
         ) {
           setSelectedWorkOrder(modalDataResponse.data);
           setShowDetailsModal(true);
+        }else if (workFlowId === workFlowResponseId &&
+            workFlowResponseName === "MANUAL" &&
+            modalDataResponse.data.length===0) {
+            toast.error("No Carrier Found")
         }
       } catch (error) {
         console.error("Error fetching workflow data:", error);
@@ -179,6 +190,12 @@ const WorkOrder = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        
+        console.log(location.state);
+        setFormData(prevState=>({
+            ...prevState,
+            workFlow:{workFlowId: location.state==null?4:location.state},
+        }))
         const originResponse = await axios.get("http://localhost:8080/route");
         const originData = originResponse.data.map((data) => data.origin);
         function removeDuplicatesByKey(array, key) {
@@ -362,6 +379,7 @@ const WorkOrder = () => {
                 {/* <th>Capacity</th> */}
                 <th>Carrier ID</th>
                 <th>Cost</th>
+                <th>Delivery Time(Days)</th>
                 <th>Carrier Name</th>
                 {/* <th>Item Type</th> */}
                 {/* <th>Load Type</th> */}
@@ -375,6 +393,7 @@ const WorkOrder = () => {
                     {/* <td>{order.capacity}</td> */}
                     <td>{order.carrier.carrierId}</td>
                     <td>{order.cost}</td>
+                    <td>{order.deliverIn}</td>
                     <td>{order.carrier.carrierName}</td>
                     <td>
                       <Button

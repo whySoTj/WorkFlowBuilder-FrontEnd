@@ -1,32 +1,77 @@
-import React from "react";
-import { Nav, Navbar, NavItem, NavLink, Button } from "reactstrap";
-import { FaTruck } from "react-icons/fa";
+import React, { useState } from 'react';
+import { Navbar, Nav, NavItem, Button } from 'reactstrap';
+import { FaTruck } from 'react-icons/fa';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const CustomNavbar = () => {
-    const handleCarrierSelection = () => {
-      // Implement your logic for selecting a carrier here
-      console.log("Carrier selected!");
-    };
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeButton, setActiveButton] = useState('');
 
+  const handleNavClick = (path, buttonName) => {
+    navigate(path);
+    setActiveButton(buttonName);
+  };
+
+  const handleCarrierSelection = () => {
+    navigate('/carriers');
+    setActiveButton('carriers');
+  };
+
+  const isActive = (pathname) => {
+    return location.pathname === pathname ? 'active-inherit' : '';
+  };
 
   return (
     <Navbar color="primary" dark expand="md">
       <Nav className="mr-auto" navbar>
         <NavItem>
-          <NavLink href="/" style={{ color: 'white' }}>Create Flow</NavLink>
+          <Button
+            color="inherit"
+            style={{ color: 'white' }}
+            onClick={() => handleNavClick('/', 'createFlow')}
+            className={isActive('/') + ' ' + (activeButton === 'createFlow' ? 'active' : '')}
+          >
+            Create Flow
+          </Button>
         </NavItem>
         <NavItem>
-          <NavLink href="/workorder" style={{ color: 'white' }}>Create Work Order</NavLink>
+          <Button
+            color="inherit"
+            style={{ color: 'white' }}
+            onClick={() => handleNavClick('/workorder', 'createWorkOrder')}
+            className={isActive('/workorder') + ' ' + (activeButton === 'createWorkOrder' ? 'active' : '')}
+          >
+            Create Work Order
+          </Button>
         </NavItem>
         <NavItem>
-          <NavLink href="/workorderlist" style={{ color: 'white' }}>Work Order List</NavLink>
+          <Button
+            color="inherit"
+            style={{ color: 'white' }}
+            onClick={() => handleNavClick('/workorderlist', 'workOrderList')}
+            className={isActive('/workorderlist') + ' ' + (activeButton === 'workOrderList' ? 'active' : '')}
+          >
+            Work Order List
+          </Button>
         </NavItem>
         <NavItem>
-          <NavLink href="/workflowlist" style={{ color: 'white' }}>Work FLow List</NavLink>
+          <Button
+            color="inherit"
+            style={{ color: 'white' }}
+            onClick={() => handleNavClick('/workflowlist', 'workFlowList')}
+            className={isActive('/workflowlist') + ' ' + (activeButton === 'workFlowList' ? 'active' : '')}
+          >
+            Work Flow List
+          </Button>
         </NavItem>
       </Nav>
       <NavItem>
-        <Button color="primary" onClick={handleCarrierSelection}>
+        <Button
+          color="primary"
+          onClick={handleCarrierSelection}
+          className={activeButton === 'carriers' ? 'active' : ''}
+        >
           <FaTruck style={{ marginRight: '5px' }} />
           Carriers
         </Button>

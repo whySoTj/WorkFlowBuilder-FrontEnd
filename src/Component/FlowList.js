@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Table, Button } from "reactstrap";
+import { useNavigate } from "react-router-dom";
+import '../CSS/WorkOrderList.css'
 
 const WorkflowList = () => {
   const [workflowData, setWorkflowData] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchWorkflowData = async () => {
@@ -20,14 +23,16 @@ const WorkflowList = () => {
   const handleSelectWorkflow = (workflowId) => {
     // Handle the selection logic for the specific workflow ID
     console.log(`Selected Workflow ID: ${workflowId}`);
+    navigate('/workorder',{state:workflowId});
+
   };
 
   return (
     <div className="container mt-4">
       <h2 className="mb-4">Workflow List</h2>
-      <Table striped>
-        <thead>
-          <tr>
+      <Table className="custom-table"  striped>
+        <thead className="table-header">
+        <tr className="table-dark">
             <th>Work Flow Id</th>
             <th>Work Flow Name</th>
             <th>Action</th>

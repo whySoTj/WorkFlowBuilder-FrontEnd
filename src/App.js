@@ -7,7 +7,7 @@ import WorkOrderList from './Component/WorkOrderList';
 import PopUp from './Component/PopUp';
 import WorkflowList from './Component/FlowList';
 import Navbar from './Component/Navbar'
-
+import Carrier from './Component/Carriers'
 
 function App() {
   return (
@@ -17,6 +17,7 @@ function App() {
         <Navbar/>
         <Routes>
           <Route path='/' element={<Configuration />} />
+          <Route path='/carriers' element={<Carrier/>} />
           <Route path='/workflowlist' element={<WorkflowList />} />
           <Route path='/workorder' element={<WorkOrder />} />
           <Route path='/workorderlist' element={<WorkOrderList/>}/>
