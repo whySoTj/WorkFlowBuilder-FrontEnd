@@ -209,14 +209,14 @@ const Configuration = () => {
           </div>
         )}
 
-        {animateFields.stepFour && (
-          <div>
-            <h2> Step 4: Cost</h2>
-            <div
-              className={`mb-3 animated-form-field ${
-                animateFields.stepFour ? "animated" : ""
-              }`}
-            >
+        // {animateFields.stepFour && (
+        //   <div>
+        //     <h2> Step 4: Cost</h2>
+        //     <div
+        //       className={`mb-3 animated-form-field ${
+        //         animateFields.stepFour ? "animated" : ""
+        //       }`}
+        //     >
               <label className="form-label" style={{ textAlign: "left" }}>
                 Cost:
               </label>
@@ -230,9 +230,9 @@ const Configuration = () => {
                 pattern="[0-9]*"
                 title="Please enter only numbers"
               />
-            </div>
-          </div>
-        )} */}
+        //     </div>
+        //   </div>
+        // )} */}
 
         {animateFields.stepFive && (
           <div>

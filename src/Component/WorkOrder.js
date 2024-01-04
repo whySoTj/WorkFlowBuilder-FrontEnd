@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import toast, {Toaster}from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 
 import {
   Modal,
@@ -14,13 +14,15 @@ import { useLocation } from "react-router-dom";
 
 const WorkOrder = () => {
   const [formData, setFormData] = useState({
-    workFlow:{workFlowId: " "},
+    workFlow: { workFlowId: " " },
     origin: "",
     destination: "",
     capacity: "",
     hazmat: false,
-    itemType: "",
+    itemType: "NORMAL",
     route: "",
+    cost: "",
+    deliverIn: "",
   });
   const [originOptions, setOriginOptions] = useState([]);
   const [destinationOptions, setDestinationOptions] = useState([]);
@@ -31,7 +33,7 @@ const WorkOrder = () => {
   const [confirmModal, setConfirmModal] = useState(false);
   const [selectedCarrierId, setSelectedCarrierId] = useState(null);
   const [workOrderId, setWorkOrderId] = useState(null);
-const location=useLocation();
+  const location = useLocation();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -73,15 +75,17 @@ const location=useLocation();
     setConfirmModal(true);
   };
 
-  // Manual selection of carriers
+  // Confirm modal for selection of carriers
   const handleConfirm = async () => {
     try {
-      // Assuming you have access to workOrderId and selectedCarrierId here
       const response = await axios.get(
-        "http://localhost:8080/selectcarrier/" + workOrderId +"/"+selectedCarrierId);
-        console.log(response.data)
-      // Perform any actions needed after successful selection
-      // ...
+        "http://localhost:8080/selectcarrier/" +
+          workOrderId +
+          "/" +
+          selectedCarrierId
+      );
+      console.log(response.data);
+
       toast.success("WorkOrder has been created with chosen carrier");
     } catch (error) {
       console.error("Error selecting carrier:", error);
@@ -90,19 +94,21 @@ const location=useLocation();
     setShowDetailsModal(false);
   };
 
+  //  Create button handler
   const handleSubmit = async (originId, destinationId, e) => {
     e.preventDefault();
+    //  form validation for submission
     if (
-        !formData.origin ||
-        !formData.destination ||
-        !formData.capacity ||
-        !formData.workFlow.workFlowId ||
-        !formData.itemType
-      ) {
-        // If any field is empty, display an error message and prevent form submission
-        toast.error("Please fill all the fields");
-        return;
-      }
+      !formData.origin ||
+      !formData.destination ||
+      !formData.workFlow.workFlowId ||
+      !formData.itemType
+    ) {
+      // If any field is empty, display an error message and prevent form submission
+      toast.error("Please fill all the fields");
+      return;
+    }
+    //  this is to set the route id in the form
     try {
       const routeResponse = await axios.get("http://localhost:8080/getroute", {
         params: { originId, destinationId },
@@ -111,20 +117,25 @@ const location=useLocation();
       const payload = {
         ...formData,
         route: { routeId: routeResponse.data.routeId },
+        cost: !formData.cost.length? "10000000": formData.cost,
+        'deliverIn' : !formData.deliverIn.length? "10000000": formData.deliverIn
       };
-
+      //   here it will post request will me made to save the WO
+     
       const response = await axios.post(
         "http://localhost:8080/workorder",
         payload
       );
+      // here Im getting the wflow Id and WOID
       const workFlowId = response.data.workFlow.workFlowId;
       console.log(workFlowId);
       const workOrderId = response.data.workOrderId;
-      setWorkOrderId(workOrderId);
+      setWorkOrderId(workOrderId); //this is used for manual carrier selection
       try {
         const workflowResponse = await axios.get(
           "http://localhost:8080/workflow"
         );
+
         console.log(workflowResponse);
         const workFlowResponseId =
           workflowResponse.data[workFlowId - 1].workFlowId;
@@ -132,9 +143,11 @@ const location=useLocation();
         const workFlowResponseName =
           workflowResponse.data[workFlowId - 1].configuration.configuration;
         console.log(workFlowResponseName);
+        //this if for showing created WO toaster
         if (
           workFlowId === workFlowResponseId &&
-          (workFlowResponseName === "AUTOMATIC"||workFlowResponseName==="FASTDELIVERY")
+          (workFlowResponseName === "AUTOMATIC" ||
+            workFlowResponseName === "FASTDELIVERY")
         ) {
           toast.success("Work Order has been successfully created");
           console.log(response.data);
@@ -166,22 +179,25 @@ const location=useLocation();
           workflowResponse.data[workFlowId - 1].configuration.configuration;
         console.log(workFlowResponseName);
 
+        //this toaster is for showing detail modal and toast error
         if (
           workFlowId === workFlowResponseId &&
           workFlowResponseName === "MANUAL" &&
-          modalDataResponse.data.length!==0
+          modalDataResponse.data.length !== 0
         ) {
           setSelectedWorkOrder(modalDataResponse.data);
           setShowDetailsModal(true);
-        }else if (workFlowId === workFlowResponseId &&
-            workFlowResponseName === "MANUAL" &&
-            modalDataResponse.data.length===0) {
-            toast.error("Ooops! No Carrier Found for the WorkOrder")
+        } else if (
+          workFlowId === workFlowResponseId &&
+          workFlowResponseName === "MANUAL" &&
+          modalDataResponse.data.length === 0
+        ) {
+          toast.error("Ooops! No Carrier Found for the WorkOrder");
         }
       } catch (error) {
         console.error("Error fetching workflow data:", error);
       }
-
+      // after all the things done form will be set default
       setFormData({
         workFlow: "",
         origin: "",
@@ -190,23 +206,23 @@ const location=useLocation();
         hazmat: false,
         itemType: "",
         route: "",
+        cost: "",
+        deliverIn: "",
       });
       setDisableDestination(true);
     } catch (error) {
       console.error("Error creating work order:", error);
     }
-    
   };
-
+  // to fetch all the data after the page loaded
   useEffect(() => {
     const fetchData = async () => {
       try {
-        
         console.log(location.state);
-        setFormData(prevState=>({
-            ...prevState,
-            workFlow:{workFlowId: location.state==null?4:location.state},
-        }))
+        setFormData((prevState) => ({
+          ...prevState,
+          workFlow: { workFlowId: location.state == null ? 4 : location.state },
+        }));
         const originResponse = await axios.get("http://localhost:8080/route");
         const originData = originResponse.data.map((data) => data.origin);
         function removeDuplicatesByKey(array, key) {
@@ -284,7 +300,7 @@ const location=useLocation();
             ))}
           </select>
         </div>
-        <div className="mb-3">
+        {/* <div className="mb-3">
           <label htmlFor="capacity" className="form-label">
             Capacity:
           </label>
@@ -298,7 +314,7 @@ const location=useLocation();
             value={formData.capacity}
             onChange={handleInputChange}
           />
-        </div>
+        </div> */}
         <div className="mb-3">
           <label className="form-label">Workflow:</label>
           <select
@@ -314,6 +330,36 @@ const location=useLocation();
               </option>
             ))}
           </select>
+        </div>
+        <div className="mb-3">
+          <label className="form-label" style={{ textAlign: "left" }}>
+            Cost:
+          </label>
+          <input
+            type="number"
+            className="form-control"
+            name="cost"
+            placeholder="Enter Cost"
+            value={formData.cost}
+            onChange={handleInputChange}
+            pattern="[0-9]*"
+            title="Please enter only numbers"
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label" style={{ textAlign: "left" }}>
+            Max Time:
+          </label>
+          <input
+            type="number"
+            className="form-control"
+            name="deliverIn"
+            placeholder="Maximum Delivery Time"
+            value={formData.deliverIn}
+            onChange={handleInputChange}
+            pattern="[0-9]*"
+            title="Please enter only numbers"
+          />
         </div>
         <div className="mb-3">
           <label className="form-label">Item Type:</label>
@@ -377,7 +423,10 @@ const location=useLocation();
       {/* Modal */}
       <Modal
         isOpen={showDetailsModal}
-        toggle={() => setShowDetailsModal(false)}
+        toggle={() => {
+            console.log("Delete Here");
+            setShowDetailsModal(false)
+        }}
       >
         <ModalHeader toggle={() => setShowDetailsModal(false)}>
           Select Carrier:
@@ -426,7 +475,10 @@ const location=useLocation();
           </Table>
         </ModalBody>
         <ModalFooter>
-          <Button color="secondary" onClick={() => setShowDetailsModal(false)}>
+          <Button color="secondary" onClick={() => {
+            console.log("Delete Here")
+            setShowDetailsModal(false)
+          }}>
             Close
           </Button>
         </ModalFooter>
