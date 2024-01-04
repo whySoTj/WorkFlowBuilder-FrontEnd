@@ -24,6 +24,7 @@ const CarriersList = () => {
     // Handle logic for accepting the carrier with the specific workOrderId
     try {
       const routeResponse = await axios.get(`http://localhost:8080/accept/${workOrderId}`); 
+      window.location.reload();
       // const response = await axios.get("http://localhost:8080/accept/");
     } catch (error) {
       console.error("Error fetching assigned carriers:", error);
@@ -69,18 +70,25 @@ const CarriersList = () => {
               {/* <td>{carrier.deliveryIn}</td> */}
               <td>{carrier.workOrderAssignableCarrierEnum}</td>
               <td>
-                <Button
-                  color="success"
-                  onClick={() => handleAccept(carrier.workOrderId)}
-                >
-                  Accept
-                </Button>{' '}
-                <Button
-                  color="danger"
-                  onClick={() => handleReject(carrier.workOrderId)}
-                >
-                  Reject
-                </Button>
+                {/* Conditionally render buttons based on status */}
+                {carrier.workOrderAssignableCarrierEnum === 'ACCEPTED' ? (
+                  <Button color="success">ACCEPTED</Button>
+                ) : (
+                  <>
+                    <Button
+                      color="success"
+                      onClick={() => handleAccept(carrier.workOrderId)}
+                    >
+                      Accept
+                    </Button>{" "}
+                    <Button
+                      color="danger"
+                      onClick={() => handleReject(carrier.workOrderId)}
+                    >
+                      Reject
+                    </Button>
+                  </>
+                )}
               </td>
             </tr>
           ))}

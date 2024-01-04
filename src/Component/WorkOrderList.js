@@ -125,7 +125,7 @@ const WorkOrderList = () => {
                     order.workOrderStatus
                   )} btn-custom-size`}
                   onClick={() => handleClick(order.workOrderId)}
-                  style={{minWidth:"120px"}}
+                  style={{ minWidth: "120px" }}
                 >
                   {order.workOrderStatus}
                 </button>
@@ -137,9 +137,12 @@ const WorkOrderList = () => {
                   <button
                     className="btn btn-danger"
                     onClick={() => {
-                      setConfirmModal(true);
-                      setDeleteOrderId(order.workOrderId);
+                      if (order.workOrderStatus !== "ACCEPTED") {
+                        setConfirmModal(true);
+                        setDeleteOrderId(order.workOrderId);
+                      }
                     }}
+                    disabled={order.workOrderStatus === "ACCEPTED"}
                   >
                     <i className="bi bi-trash"></i>
                   </button>
@@ -187,6 +190,9 @@ const WorkOrderList = () => {
               </p>
               <p>
                 <strong>Cost :</strong> {selectedWorkOrder.cost}
+              </p>
+              <p>
+                <strong>Delivery Days :</strong> {selectedWorkOrder.deliverIn}
               </p>
             </div>
           )}

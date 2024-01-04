@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "./Header";
 import "../CSS/Configuration.css";
+import toast, {Toaster}from "react-hot-toast";
+
 
 const Configuration = () => {
   const [formData, setFormData] = useState({
@@ -55,7 +57,7 @@ const Configuration = () => {
       !formData.workFlowName ||
       !formData.createWorkOrder
     ) {
-      alert("Please fill in all required fields.");
+        toast.error("Please fill in all fields");
       return;
     }
 

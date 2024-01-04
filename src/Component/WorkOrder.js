@@ -82,7 +82,7 @@ const location=useLocation();
         console.log(response.data)
       // Perform any actions needed after successful selection
       // ...
-      toast.success("Carrier has been selected");
+      toast.success("WorkOrder has been created with chosen carrier");
     } catch (error) {
       console.error("Error selecting carrier:", error);
     }
@@ -92,6 +92,17 @@ const location=useLocation();
 
   const handleSubmit = async (originId, destinationId, e) => {
     e.preventDefault();
+    if (
+        !formData.origin ||
+        !formData.destination ||
+        !formData.capacity ||
+        !formData.workFlow.workFlowId ||
+        !formData.itemType
+      ) {
+        // If any field is empty, display an error message and prevent form submission
+        toast.error("Please fill all the fields");
+        return;
+      }
     try {
       const routeResponse = await axios.get("http://localhost:8080/getroute", {
         params: { originId, destinationId },
@@ -165,7 +176,7 @@ const location=useLocation();
         }else if (workFlowId === workFlowResponseId &&
             workFlowResponseName === "MANUAL" &&
             modalDataResponse.data.length===0) {
-            toast.error("No Carrier Found")
+            toast.error("Ooops! No Carrier Found for the WorkOrder")
         }
       } catch (error) {
         console.error("Error fetching workflow data:", error);
