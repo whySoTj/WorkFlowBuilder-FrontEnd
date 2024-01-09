@@ -23,7 +23,7 @@ const WorkflowList = () => {
   const handleSelectWorkflow = (workflowId) => {
     // Handle the selection logic for the specific workflow ID
     console.log(`Selected Workflow ID: ${workflowId}`);
-    navigate('/workorder',{state:workflowId});
+    navigate('/popup',{state:workflowId});
 
   };
 

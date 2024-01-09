@@ -199,12 +199,12 @@ const WorkOrder = () => {
       }
       // after all the things done form will be set default
       setFormData({
-        workFlow: "",
+        workFlow: { workFlowId:4},
         origin: "",
         destination: "",
         capacity: "",
         hazmat: false,
-        itemType: "",
+        itemType: "NORMAL",
         route: "",
         cost: "",
         deliverIn: "",

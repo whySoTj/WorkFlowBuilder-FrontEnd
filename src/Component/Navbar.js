@@ -39,8 +39,8 @@ const CustomNavbar = () => {
           <Button
             color="inherit"
             style={{ color: 'white' }}
-            onClick={() => handleNavClick('/workorder', 'createWorkOrder')}
-            className={isActive('/workorder') + ' ' + (activeButton === 'createWorkOrder' ? 'active' : '')}
+            onClick={() => handleNavClick('/popup', 'createWorkOrder')}
+            className={isActive('/popup') + ' ' + (activeButton === 'createWorkOrder' ? 'active' : '')}
           >
             Create Work Order
           </Button>

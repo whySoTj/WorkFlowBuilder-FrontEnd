@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import toast, {Toaster}from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
+
 import {
   Modal,
   ModalHeader,
@@ -10,16 +10,19 @@ import {
   Table,
   Button,
 } from "reactstrap";
+import { useLocation } from "react-router-dom";
 
 const WorkOrder = () => {
   const [formData, setFormData] = useState({
-    workFlow: "",
+    workFlow: { workFlowId: " " },
     origin: "",
     destination: "",
     capacity: "",
     hazmat: false,
-    itemType: "",
+    itemType: "NORMAL",
     route: "",
+    cost: "",
+    deliverIn: "",
   });
   const [originOptions, setOriginOptions] = useState([]);
   const [destinationOptions, setDestinationOptions] = useState([]);
@@ -29,9 +32,13 @@ const WorkOrder = () => {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
   const [selectedCarrierId, setSelectedCarrierId] = useState(null);
+  const [selectedCarrierData, setSelectedCarrierData] = useState(null); // State to store selected carrier data
   const [workOrderId, setWorkOrderId] = useState(null);
-  const navigate = useNavigate();
+  const [createWorkOrder,setCreateWorkOrder] = useState(false);
 
+  const location = useLocation();
+
+  // Modify your handleInputChange function
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     const inputValue = type === "checkbox" ? checked : value;
@@ -53,6 +60,25 @@ const WorkOrder = () => {
     }
   };
 
+  const handleWorkflowChange = (e) => {
+    if(e.target.value?.length>0){const selectedWorkflowId = e.target.value;
+    const selectedWorkflow = workflowOptions.find(
+      (workflow) => workflow.workFlowId == selectedWorkflowId
+    );
+
+    if (selectedWorkflow.configuration.configuration === "MANUAL") {
+      setCreateWorkOrder(true);      
+    }else{
+      setSelectedCarrierData(null);
+    }
+
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      workFlow: { workFlowId: selectedWorkflowId },
+      // Update other fields in formData based on the selected workflow if needed
+    }));}
+  };
+
   const getDestinationData = async (locationId, city) => {
     try {
       const response = await axios.get(
@@ -67,21 +93,73 @@ const WorkOrder = () => {
       console.error("Error sending data:", error);
     }
   };
-  const handleCarrierSelect = async (carrierId) => {
+  const handleCarrierSelect = async (order,carrierId) => {
+    setSelectedCarrierData(order);
     setSelectedCarrierId(carrierId);
-    setConfirmModal(true);
+    console.log("njksdmk",carrierId)
+    console.log(selectedCarrierData);
+    setShowDetailsModal(false);
+    setCreateWorkOrder(false);
+    // setConfirmModal(true);
   };
-
-  // Manual selection of carriers
-  const handleConfirm = async () => {
+  
+  //after clicking on select carrier it is getting stored in formData for manual condition
+  const handleSelectCarrier = async () => {
     try {
-      // Assuming you have access to workOrderId and selectedCarrierId here
+      const originId = formData.origin;
+      const destinationId = formData.destination;
+
+      // Fetch the route ID
+      const routeResponse = await axios.get("http://localhost:8080/getroute", {
+        params: { originId, destinationId },
+      });
+      const routeId = routeResponse.data.routeId;
+
+      // Update the form data with the received routeId
+      setFormData((prevState) => ({
+        ...prevState,
+        route: { routeId: routeId },
+      }));
+
+      const updatedFormData = {
+        ...formData,
+        route: { routeId: routeId },
+      };
+
+      // Fetch carrier list based on itemType and routeId
+      const itemType = formData.itemType;
+      const manualCarrierList = await axios.get(
+        `http://localhost:8080/routecarriers/${itemType}/${routeId}`
+      );
+
+      // If manualCarrierList has data, display the modal with the carrier list
+      if (manualCarrierList.data && manualCarrierList.data.length > 0) {
+        setSelectedCarrierData(updatedFormData); // Store updated form data in selectedCarrierData state
+        setShowDetailsModal(true); // Show the modal with the carrier list
+        setSelectedWorkOrder(manualCarrierList.data); // Set the carrier list in selectedWorkOrder state
+      } else {
+        toast.error("No Carrier Found for the Work Order");
+      }
+    } catch (error) {
+      console.error("Error selecting carrier:", error);
+    }
+  };
+//   useEffect(()=>{
+//  console.log(first)
+//   },[workOrderId]);
+  // Confirm modal for selection of carriers
+  const handleConfirm = async (workOrderIds) => {
+    try {
+      console.log(workOrderId,selectedCarrierId)
       const response = await axios.get(
-        "http://localhost:8080/selectcarrier/" + workOrderId +"/"+selectedCarrierId);
-        console.log(response.data)
-      // Perform any actions needed after successful selection
-      // ...
-      toast.success("Carrier has been selected");
+        "http://localhost:8080/selectcarrier/" +
+          workOrderIds +
+          "/" +
+          selectedCarrierId
+      );
+      console.log(response.data);
+
+      toast.success("WorkOrder has been created with chosen carrier");
     } catch (error) {
       console.error("Error selecting carrier:", error);
     }
@@ -89,8 +167,21 @@ const WorkOrder = () => {
     setShowDetailsModal(false);
   };
 
+  //  Create button handler
   const handleSubmit = async (originId, destinationId, e) => {
     e.preventDefault();
+    //  form validation for submission
+    if (
+      !formData.origin ||
+      !formData.destination ||
+      !formData.workFlow.workFlowId 
+      // !formData.itemType
+    ) {
+      // If any field is empty, display an error message and prevent form submission
+      toast.error("Please fill all the fields");
+      return;
+    }
+    //  this is to set the route id in the form
     try {
       const routeResponse = await axios.get("http://localhost:8080/getroute", {
         params: { originId, destinationId },
@@ -99,30 +190,38 @@ const WorkOrder = () => {
       const payload = {
         ...formData,
         route: { routeId: routeResponse.data.routeId },
+        cost: !formData.cost.length ? "10000000" : formData.cost,
+        deliverIn: !formData.deliverIn.length ? "10000000" : formData.deliverIn,
       };
+      //   here it will post request will me made to save the WO
 
       const response = await axios.post(
         "http://localhost:8080/workorder",
         payload
       );
-      const workFlowId = response.data.workFlow.workFlowId;
-      console.log(workFlowId);
-      const workOrderId = response.data.workOrderId;
-      setWorkOrderId(workOrderId);
+      // here Im getting the wflow Id and WOID
+      const workFlowIds = response.data.workFlow.workFlowId;
+      console.log(workFlowIds);
+      const workOrderIds = response.data.workOrderId;
+      console.log(workOrderIds)
+      setWorkOrderId(workOrderIds); //this is used for manual carrier selection
       try {
         const workflowResponse = await axios.get(
           "http://localhost:8080/workflow"
         );
+
         console.log(workflowResponse);
         const workFlowResponseId =
-          workflowResponse.data[workFlowId - 1].workFlowId;
+          workflowResponse.data[workFlowIds - 1].workFlowId;
         console.log(workFlowResponseId);
         const workFlowResponseName =
-          workflowResponse.data[workFlowId - 1].configuration.configuration;
+          workflowResponse.data[workFlowIds - 1].configuration.configuration;
         console.log(workFlowResponseName);
+        //this if for showing created WO toaster
         if (
-          workFlowId == workFlowResponseId &&
-          (workFlowResponseName == "AUTOMATIC"||workFlowResponseName=="FASTDELIVERY")
+          workFlowIds === workFlowResponseId &&
+          (workFlowResponseName === "AUTOMATIC" ||
+            workFlowResponseName === "FASTDELIVERY")
         ) {
           toast.success("Work Order has been successfully created");
           console.log(response.data);
@@ -132,10 +231,11 @@ const WorkOrder = () => {
       } catch (error) {
         console.error("Error fetching workflow data:", error);
       }
-      // const workFlowId = response.data.workFlow.workFlowId;
-      // console.log(workFlowId);
-      // const workOrderId = response.data.workOrderId;
-      // setWorkOrderId(workOrderId);
+      const workFlowId = response.data.workFlow.workFlowId;
+      console.log(workFlowId);
+      const workOrderId = response.data.workOrderId;
+      console.log(workOrderId)
+      setWorkOrderId(workOrderId);
 
       const modalDataResponse = await axios.get(
         "http://localhost:8080/savedlist/" + workOrderId
@@ -145,42 +245,62 @@ const WorkOrder = () => {
         const workflowResponse = await axios.get(
           "http://localhost:8080/workflow"
         );
+
         const workFlowResponseId =
           workflowResponse.data[workFlowId - 1].workFlowId;
         console.log(workFlowResponseId);
+
         const workFlowResponseName =
           workflowResponse.data[workFlowId - 1].configuration.configuration;
         console.log(workFlowResponseName);
+
+        //this toaster is for showing detail modal and toast error
         if (
-          workFlowId == workFlowResponseId &&
-          workFlowResponseName == "MANUAL"
+          workFlowId === workFlowResponseId &&
+          workFlowResponseName === "MANUAL" &&
+          modalDataResponse.data.length !== 0
         ) {
           setSelectedWorkOrder(modalDataResponse.data);
           setShowDetailsModal(true);
+          console.log("dfafasdf")
+          handleConfirm(workOrderIds);
+        } else if (
+          workFlowId === workFlowResponseId &&
+          workFlowResponseName === "MANUAL" &&
+          modalDataResponse.data.length === 0
+        ) {
+          toast.error("Ooops! No Carrier Found for the WorkOrder");
         }
       } catch (error) {
         console.error("Error fetching workflow data:", error);
       }
-
+      // after all the things done form will be set default
       setFormData({
-        workFlow: "",
+        workFlow: { workFlowId: 4 },
         origin: "",
         destination: "",
         capacity: "",
         hazmat: false,
-        itemType: "",
+        itemType: "NORMAL",
         route: "",
+        cost: "",
+        deliverIn: "",
       });
+      setSelectedCarrierData(null);
       setDisableDestination(true);
     } catch (error) {
       console.error("Error creating work order:", error);
     }
-    
   };
-
+  // to fetch all the data after the page loaded
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log(location.state);
+        setFormData((prevState) => ({
+          ...prevState,
+          workFlow: { workFlowId: location.state == null ? 4 : location.state },
+        }));
         const originResponse = await axios.get("http://localhost:8080/route");
         const originData = originResponse.data.map((data) => data.origin);
         function removeDuplicatesByKey(array, key) {
@@ -216,6 +336,9 @@ const WorkOrder = () => {
     fetchWorkflowOptions();
   }, []);
 
+  // useEffect(()=>{
+  //   console.log(selectedCarrierData)
+  // },[selectedCarrierData])
   return (
     <div className="container mt-5">
       <h2>Work Order</h2>
@@ -258,7 +381,7 @@ const WorkOrder = () => {
             ))}
           </select>
         </div>
-        <div className="mb-3">
+        {/* <div className="mb-3">
           <label htmlFor="capacity" className="form-label">
             Capacity:
           </label>
@@ -272,14 +395,14 @@ const WorkOrder = () => {
             value={formData.capacity}
             onChange={handleInputChange}
           />
-        </div>
+        </div> */}
         <div className="mb-3">
           <label className="form-label">Workflow:</label>
           <select
             className="form-select"
             name="workFlow"
             value={formData.workFlow.workFlowId || ""}
-            onChange={handleInputChange}
+            onChange={handleWorkflowChange}
           >
             <option value="">Select Workflow</option>
             {workflowOptions.map((workflow) => (
@@ -288,6 +411,36 @@ const WorkOrder = () => {
               </option>
             ))}
           </select>
+        </div>
+        <div className="mb-3">
+          <label className="form-label" style={{ textAlign: "left" }}>
+            Cost:
+          </label>
+          <input
+            type="number"
+            className="form-control"
+            name="cost"
+            placeholder="Enter Cost"
+            value={formData.cost}
+            onChange={handleInputChange}
+            pattern="[0-9]*"
+            title="Please enter only numbers"
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label" style={{ textAlign: "left" }}>
+            Max Time:
+          </label>
+          <input
+            type="number"
+            className="form-control"
+            name="deliverIn"
+            placeholder="Maximum Delivery Time"
+            value={formData.deliverIn}
+            onChange={handleInputChange}
+            pattern="[0-9]*"
+            title="Please enter only numbers"
+          />
         </div>
         <div className="mb-3">
           <label className="form-label">Item Type:</label>
@@ -326,10 +479,76 @@ const WorkOrder = () => {
               <label className="form-check-label">Hazmat</label>
             </div>
           </div>
+          {selectedCarrierData && (
+            <Table className="custom-table" striped>
+              <thead className="table-header">
+                <tr className="table-white">
+                  <th>Carrier ID</th>
+                  <th>Cost</th>
+                  <th>Delivery Time(Days)</th>
+                  <th>Carrier Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{selectedCarrierData.routeCarrierId}</td>
+                  <td>{selectedCarrierData.cost}</td>
+                  <td>{selectedCarrierData.deliverIn}</td>
+                  <td>
+                    {selectedCarrierData.carrier
+                      ? selectedCarrierData.carrier.carrierName
+                      : "N/A"}
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
+          )}
         </div>
-        <button type="submit" className="btn btn-primary">
+        <button type="submit" className="btn btn-primary" disabled={createWorkOrder}>
           Create Work Order
         </button>
+        {formData.workFlow.workFlowId && (
+          <button
+            type="button"
+            className="btn btn-primary ms-2"
+            onClick={handleSelectCarrier}
+            disabled={
+              !formData.workFlow.workFlowId ||
+              (formData.workFlow.workFlowId &&
+                workflowOptions.find(
+                  (workflow) =>
+                    workflow.workFlowId ===
+                    parseInt(formData.workFlow.workFlowId)
+                )?.configuration?.configuration !== "MANUAL")
+            }
+          >
+            Select Carrier
+          </button>
+        )}
+        {/* {selectedCarrierData && (
+          <Table className="custom-table" striped>
+            <thead className="table-header">
+              <tr className="table-dark">
+                <th>Carrier ID</th>
+                <th>Cost</th>
+                <th>Delivery Time(Days)</th>
+                <th>Carrier Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{selectedCarrierData.routeCarrierId}</td>
+                <td>{selectedCarrierData.cost}</td>
+                <td>{selectedCarrierData.deliverIn}</td>
+                <td>
+                  {selectedCarrierData.carrier
+                    ? selectedCarrierData.carrier.carrierName
+                    : "N/A"}
+                </td>
+              </tr>
+            </tbody>
+          </Table>
+        )} */}
       </form>
 
       {/* Modal for carrier selection confirmation */}
@@ -351,7 +570,9 @@ const WorkOrder = () => {
       {/* Modal */}
       <Modal
         isOpen={showDetailsModal}
-        toggle={() => setShowDetailsModal(false)}
+        toggle={() => {
+          setShowDetailsModal(false);
+        }}
       >
         <ModalHeader toggle={() => setShowDetailsModal(false)}>
           Select Carrier:
@@ -360,45 +581,43 @@ const WorkOrder = () => {
           <Table striped>
             <thead>
               <tr>
-                {/* <th>Route Carrier ID</th> */}
-                {/* <th>Capacity</th> */}
                 <th>Carrier ID</th>
                 <th>Cost</th>
+                <th>Delivery Time(Days)</th>
                 <th>Carrier Name</th>
-                {/* <th>Item Type</th> */}
-                {/* <th>Load Type</th> */}
               </tr>
             </thead>
             <tbody>
               {selectedWorkOrder &&
                 selectedWorkOrder.map((order, index) => (
                   <tr key={index}>
-                    {/* <td>{order.routeCarrierId}</td> */}
-                    {/* <td>{order.capacity}</td> */}
                     <td>{order.carrier.carrierId}</td>
                     <td>{order.cost}</td>
+                    <td>{order.deliverIn}</td>
                     <td>{order.carrier.carrierName}</td>
                     <td>
                       <Button
                         color="primary"
                         onClick={() =>
-                          handleCarrierSelect(order.carrier.carrierId)
+                          {handleCarrierSelect(order,order.carrier.carrierId)
+                          {console.log("order",order)}}
                         }
                       >
                         Select
                       </Button>
                     </td>
-                    {/* <td>{order.itemType}</td> */}
-                    {/* <td>{order.loadType}</td> */}
-                    {/* Add other details */}
-                    {/* ... */}
                   </tr>
                 ))}
             </tbody>
           </Table>
         </ModalBody>
         <ModalFooter>
-          <Button color="secondary" onClick={() => setShowDetailsModal(false)}>
+          <Button
+            color="secondary"
+            onClick={() => {
+              setShowDetailsModal(false);
+            }}
+          >
             Close
           </Button>
         </ModalFooter>
