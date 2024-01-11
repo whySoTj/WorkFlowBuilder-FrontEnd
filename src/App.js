@@ -8,6 +8,7 @@ import PopUp from './Component/PopUp';
 import WorkflowList from './Component/FlowList';
 import Navbar from './Component/Navbar'
 import Carrier from './Component/Carriers'
+import Filter from './Component/Filter'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path='/workorderlist' element={<WorkOrderList/>}/>
           <Route path='/popup' element={<PopUp/>}/>
           <Route path='/popup/:id' element={<PopUp/>}/>
+          <Route path='/filter' element={<Filter/>}/>
           
           
         </Routes>
